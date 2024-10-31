@@ -1,0 +1,1 @@
+from scripts.task.bin_picking import BinPicking
