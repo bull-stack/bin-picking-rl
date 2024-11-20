@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 def object_reached_goal(
     env: ManagerBasedRLEnv,
-    command_name: str = "object_pose",
+    command_name: str = "object_pose_1",
     threshold: float = 0.02,
     robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
     object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
@@ -47,7 +47,7 @@ def object_reached_goal(
     des_pos_b = command[:, :3]
     des_pos_w, _ = combine_frame_transforms(robot.data.root_state_w[:, :3], robot.data.root_state_w[:, 3:7], des_pos_b)
     # distance of the end-effector to the object: (num_envs,)
-    distance = torch.norm(des_pos_w - object.data.root_pos_w[:, :3], dim=1)
+    distance = torch.linalg.norm(des_pos_w - object.data.root_pos_w[:, :3], dim=1)
 
     # rewarded if the object is lifted above the threshold
     return distance < threshold

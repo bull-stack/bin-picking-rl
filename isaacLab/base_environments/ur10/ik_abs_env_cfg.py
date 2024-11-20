@@ -12,7 +12,7 @@ from . import joint_pos_env_cfg
 ##
 # Pre-defined configs
 ##
-from scripts.base_environments.ur10.ur10 import UR10_HIGH_PD_CFG  
+from .ur10 import UR10_HIGH_PD_CFG  
 
 
 

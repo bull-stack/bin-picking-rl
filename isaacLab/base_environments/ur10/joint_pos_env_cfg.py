@@ -13,14 +13,15 @@ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
 
 # from omni.isaac.lab_tasks.manager_based.manipulation.lift import mdp
 # from omni.isaac.lab_tasks.manager_based.manipulation.lift.lift_env_cfg import LiftEnvCfg
-from scripts.base_environments import mdp
+from base_environments import mdp
 ##
 # Pre-defined configs
 ##
 from omni.isaac.lab.markers.config import FRAME_MARKER_CFG  # isort: skip
 # from omni.isaac.lab_assets.universal_robots import UR10_CFG  # isort: skip
-from scripts.base_environments.bin_picking_env_cfg import BinPickingEnvCfg
-from scripts.base_environments.ur10.ur10 import UR10_CFG
+from base_environments.bin_picking_env_cfg import BinPickingEnvCfg
+from .ur10 import UR10_CFG
+
 @configclass
 class UR10BinPickingEnvCfg(BinPickingEnvCfg):
     def __post_init__(self):
@@ -35,8 +36,10 @@ class UR10BinPickingEnvCfg(BinPickingEnvCfg):
             asset_name="robot", joint_names=[".*"], scale=0.5, use_default_offset=True
         )
         # Set the body name for the end effector
-        self.commands.object_pose.body_name = "ee_link" # type: ignore
-
+        self.commands.object_pose_1.body_name = "ee_link" # type: ignore
+        # self.commands.object_pose_2.body_name = "ee_link" # type: ignore
+        # self.commands.object_pose_3.body_name = "ee_link" # type: ignore
+        # self.commands.object_pose_4.body_name = "ee_link" # type: ignore
         # Set Cube as object
         self.scene.object = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Object",
@@ -71,6 +74,27 @@ class UR10BinPickingEnvCfg(BinPickingEnvCfg):
                         pos=[0.0, 0.0, 0.1034], # type: ignore
                     ),
                 ),
+                # FrameTransformerCfg.FrameCfg(
+                #     prim_path="{ENV_REGEX_NS}/Robot/ee_link",
+                #     name="end_effector",
+                #     offset=OffsetCfg(
+                #         pos=[0.0, 0.0, 0.1034], # type: ignore
+                #     ),
+                # ),
+                # FrameTransformerCfg.FrameCfg(
+                #     prim_path="{ENV_REGEX_NS}/Robot/ee_link",
+                #     name="end_effector",
+                #     offset=OffsetCfg(
+                #         pos=[0.0, 0.0, 0.1034], # type: ignore
+                #     ),
+                # ),
+                # FrameTransformerCfg.FrameCfg(
+                #     prim_path="{ENV_REGEX_NS}/Robot/ee_link",
+                #     name="end_effector",
+                #     offset=OffsetCfg(
+                #         pos=[0.0, 0.0, 0.1034], # type: ignore
+                #     ),
+                # ),
             ],
         )
 

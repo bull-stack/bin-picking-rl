@@ -17,12 +17,16 @@ if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
 
 
-def object_is_lifted(
-    env: ManagerBasedRLEnv, minimal_height: float, object_cfg: SceneEntityCfg = SceneEntityCfg("object")
+def object_is_dragged(
+    env: ManagerBasedRLEnv, minimal_drag: float, object_cfg: SceneEntityCfg = SceneEntityCfg("object")
 ) -> torch.Tensor:
-    """Reward the agent for lifting the object above the minimal height."""
+    """Reward for dragging the object."""
     object: RigidObject = env.scene[object_cfg.name]
-    return torch.where(object.data.root_pos_w[:, 2] > minimal_height, 1.0, 0.0)
+    
+    root_pos_w = torch.tensor(object.data.root_pos_w)
+    first_col = root_pos_w[:, 0]
+    third_col = root_pos_w[:, 2]
+    return torch.where((first_col > minimal_drag) & (third_col > minimal_drag), 1.0, -1.0)
 
 
 def object_ee_distance(
@@ -48,7 +52,7 @@ def object_ee_distance(
 def object_goal_distance(
     env: ManagerBasedRLEnv,
     std: float,
-    minimal_height: float,
+    minimal_drag: float,
     command_name: str,
     robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
     object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
@@ -64,4 +68,4 @@ def object_goal_distance(
     # distance of the end-effector to the object: (num_envs,)
     distance = torch.norm(des_pos_w - object.data.root_pos_w[:, :3], dim=1)
     # rewarded if the object is lifted above the threshold
-    return (object.data.root_pos_w[:, 2] > minimal_height) * (1 - torch.tanh(distance / std))
+    return (object.data.root_pos_w[:, 2] > minimal_drag) * (1 - torch.tanh(distance / std))

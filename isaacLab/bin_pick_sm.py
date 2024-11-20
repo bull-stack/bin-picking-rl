@@ -22,7 +22,7 @@ import argparse
 from omni.isaac.lab.app import AppLauncher
 
 # add argparse arguments
-parser = argparse.ArgumentParser(description="Pick and lift state machine for lift environments.")
+parser = argparse.ArgumentParser(description="Pick and Drag state machine for lift environments.")
 parser.add_argument(
     "--disable_fabric", action="store_true", default=False, help="Disable fabric and use USD I/O operations."
 )
@@ -41,25 +41,16 @@ simulation_app = app_launcher.app
 import gymnasium as gym
 import torch
 from collections.abc import Sequence
-
 import warp as wp
+import sys
 
 from omni.isaac.lab.assets.rigid_object.rigid_object_data import RigidObjectData
 
 import omni.isaac.lab_tasks  # noqa: F401
-from omni.isaac.lab_tasks.manager_based.manipulation.lift.lift_env_cfg import LiftEnvCfg
+from base_environments.bin_picking_env_cfg import BinPickingEnvCfg
+# from omni.isaac.lab_tasks.manager_based.manipulation.lift.lift_env_cfg import LiftEnvCfg
 from omni.isaac.lab_tasks.utils.parse_cfg import parse_env_cfg
-
-from scripts.base_environments.bin_picking_env_cfg import BinPickingEnvCfg
-from scripts.base_environments.ur10 import ik_abs_env_cfg
-gym.register(
-    id="Isaac-Bin-Picking-UR10-IK-Abs-v0",
-    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
-    kwargs={
-        "env_cfg_entry_point": ik_abs_env_cfg.UR10BinPickingEnvCfg_PLAY,
-    },
-    disable_env_checker=True,
-)
+from base_environments.ur10 import ik_abs_env_cfg
 
 # initialize warp
 wp.init()
@@ -80,7 +71,7 @@ class BinPickSmState:
     APPROACH_OBJECT = wp.constant(2)
     LOWER_TO_OBJECT = wp.constant(3)
     DRAG_OBJECT = wp.constant(4)
-
+    RAISE_ABOVE_OBJECT = wp.constant(5)
 
 class BinPickSmWaitTime:
     """Additional wait times (in s) for states for before switching."""
@@ -89,8 +80,8 @@ class BinPickSmWaitTime:
     APPROACH_ABOVE_OBJECT = wp.constant(0.5)
     APPROACH_OBJECT = wp.constant(0.6)
     LOWER_TO_OBJECT = wp.constant(0.3)
-    DRAG_OBJECT = wp.constant(1.0)
-
+    DRAG_OBJECT = wp.constant(2.0)
+    RAISE_ABOVE_OBJECT = wp.constant(0.3)
 
 @wp.kernel
 def infer_state_machine(
@@ -144,7 +135,15 @@ def infer_state_machine(
         # wait for a while
         if sm_wait_time[tid] >= BinPickSmWaitTime.DRAG_OBJECT:
             # move to next state and reset wait time
-            sm_state[tid] = BinPickSmState.DRAG_OBJECT
+            sm_state[tid] = BinPickSmState.RAISE_ABOVE_OBJECT
+            sm_wait_time[tid] = 0.0
+    elif state == BinPickSmState.RAISE_ABOVE_OBJECT:
+        des_ee_pose[tid] = des_object_pose[tid]
+        # TODO: error between current and desired ee pose below threshold
+        # wait for a while
+        if sm_wait_time[tid] >= BinPickSmWaitTime.RAISE_ABOVE_OBJECT:
+            # move to next state and reset wait time
+            sm_state[tid] = BinPickSmState.RAISE_ABOVE_OBJECT
             sm_wait_time[tid] = 0.0
     # increment wait time
     sm_wait_time[tid] = sm_wait_time[tid] + dt[tid]
@@ -251,7 +250,6 @@ def main():
     env = gym.make("Isaac-Bin-Picking-UR10-IK-Abs-v0", cfg=env_cfg)
     # reset environment at start
     env.reset()
-    print(env.action_space)
     # create action buffers (position + quaternion)
     actions = torch.zeros(env.unwrapped.action_space.shape, device=env.unwrapped.device) # type: ignore
     actions[:, 3] = 1.0
@@ -260,7 +258,6 @@ def main():
     desired_orientation[:, 1] = 1.0
     # create state machine
     pick_sm = BinPickAndDragSm(env_cfg.sim.dt * env_cfg.decimation, env.unwrapped.num_envs, env.unwrapped.device) # type: ignore
-
     while simulation_app.is_running():
         # run everything in inference mode
         with torch.inference_mode():
@@ -276,8 +273,8 @@ def main():
             object_data: RigidObjectData = env.unwrapped.scene["object"].data # type: ignore
             object_position = object_data.root_pos_w - env.unwrapped.scene.env_origins # type: ignore
             # -- target object frame
-            desired_position = env.unwrapped.command_manager.get_command("object_pose")[..., :3] # type: ignore
-
+            desired_position = env.unwrapped.command_manager.get_command("object_pose_1")[..., :3] # type: ignore
+            # print(desired_position)
             # advance state machine
             actions = pick_sm.compute(
                 torch.cat([tcp_rest_position, tcp_rest_orientation], dim=-1),

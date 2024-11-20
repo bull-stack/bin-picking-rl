@@ -44,7 +44,6 @@ from datetime import datetime
 from rsl_rl.runners import OnPolicyRunner
 
 # Import extensions to set up environment tasks
-import bin-picking.tasks  # noqa: F401
 
 from omni.isaac.lab.envs import ManagerBasedRLEnvCfg
 from omni.isaac.lab.utils.dict import print_dict
@@ -63,7 +62,7 @@ def main():
     # parse configuration
     env_cfg: ManagerBasedRLEnvCfg = parse_env_cfg(
         args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs, use_fabric=not args_cli.disable_fabric
-    )
+    ) # type: ignore
     agent_cfg: RslRlOnPolicyRunnerCfg = cli_args.parse_rsl_rl_cfg(args_cli.task, args_cli)
 
     # specify directory for logging experiments
@@ -94,10 +93,10 @@ def main():
         print_dict(video_kwargs, nesting=4)
         env = gym.wrappers.RecordVideo(env, **video_kwargs)
     # wrap around environment for rsl-rl
-    env = RslRlVecEnvWrapper(env)
+    env = RslRlVecEnvWrapper(env) # type: ignore
 
     # create runner from rsl-rl
-    runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)
+    runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device) # type: ignore
     # write git state to logs
     runner.add_git_repo_to_log(__file__)
     # save resume path before creating a new log_dir

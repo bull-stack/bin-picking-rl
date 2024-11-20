@@ -20,13 +20,17 @@ from omni.isaac.lab.sensors.frame_transformer.frame_transformer_cfg import Frame
 from omni.isaac.lab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
 from omni.isaac.lab.utils import configclass
 from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
-
+from omni.isaac.lab.markers import VisualizationMarkers, VisualizationMarkersCfg
+import omni.isaac.lab.sim as sim_utils
+from omni.isaac.lab.markers.config import FRAME_MARKER_CFG  # isort: skip
+from omni.isaac.lab.sensors.frame_transformer import OffsetCfg
 from . import mdp
 
 ##
 # Scene definition
 ##
-
+FRAME_MARKER_SMALL_CFG = FRAME_MARKER_CFG.copy() # type: ignore
+FRAME_MARKER_SMALL_CFG.markers["frame"].scale = (0.10, 0.10, 0.10)
 
 @configclass
 class BinPickingSceneCfg(InteractiveSceneCfg):
@@ -67,6 +71,7 @@ class BinPickingSceneCfg(InteractiveSceneCfg):
         prim_path="{ENV_REGEX_NS}/bin_1",
         spawn=sim_utils.UsdFileCfg(usd_path='usd/bin.usd'),
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.4, 0.6, 0.64)),
+
     )
     bin_2 = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/bin_2",
@@ -90,6 +95,20 @@ class BinPickingSceneCfg(InteractiveSceneCfg):
         spawn=GroundPlaneCfg(),
     )
 
+    # bin_1_frame = FrameTransformerCfg(
+    #     prim_path="{ENV_REGEX_NS}/bin_1/sektion",
+    #     debug_vis=True,
+    #     visualizer_cfg=FRAME_MARKER_SMALL_CFG.replace(prim_path="/Visuals/bin1FrameTransformer"),
+    #     target_frames=[
+    #         FrameTransformerCfg.FrameCfg(
+    #             prim_path="{ENV_REGEX_NS}/bin_1/bin_1_frame",
+    #             name="bin_1_frame",
+    #             offset=OffsetCfg(
+    #                 pos=(0, 0, 0),
+    #             ),
+    #         ),
+    #     ],
+    # )
     # lights
     light = AssetBaseCfg(
         prim_path="/World/light",
@@ -105,16 +124,43 @@ class BinPickingSceneCfg(InteractiveSceneCfg):
 @configclass
 class CommandsCfg:
     """Command terms for the MDP."""
-
-    object_pose = mdp.UniformPoseCommandCfg( # type: ignore
+    
+    object_pose_1 = mdp.UniformPoseCommandCfg( # type: ignore
         asset_name="robot",
         body_name=MISSING,  # will be set by agent env cfg # type: ignore
         resampling_time_range=(5.0, 5.0),
         debug_vis=True,
         ranges=mdp.UniformPoseCommandCfg.Ranges( # type: ignore
-            pos_x=(0.4, 0.6), pos_y=(-0.25, 0.25), pos_z=(0.25, 0.5), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+            pos_x=(0.1, 0.1), pos_y=(0.4, 0.4), pos_z=(0.05, 0.05), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         ),
     )
+    # object_pose_2 = mdp.UniformPoseCommandCfg( # type: ignore
+    #     asset_name="robot",
+    #     body_name=MISSING,  # will be set by agent env cfg # type: ignore
+    #     resampling_time_range=(5.0, 5.0),
+    #     debug_vis=True,
+    #     ranges=mdp.UniformPoseCommandCfg.Ranges( # type: ignore
+    #         pos_x=(0.2, 0.8), pos_y=(-0.25, 0.25), pos_z=(1, 1), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+    #     ),
+    # )
+    # object_pose_3 = mdp.UniformPoseCommandCfg( # type: ignore
+    #     asset_name="robot",
+    #     body_name=MISSING,  # will be set by agent env cfg # type: ignore
+    #     resampling_time_range=(5.0, 5.0),
+    #     debug_vis=True,
+    #     ranges=mdp.UniformPoseCommandCfg.Ranges( # type: ignore
+    #         pos_x=(0.2, 0.8), pos_y=(-0.25, 0.25), pos_z=(1, 1), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+    #     ),
+    # )
+    # object_pose_4 = mdp.UniformPoseCommandCfg( # type: ignore
+    #     asset_name="robot",
+    #     body_name=MISSING,  # will be set by agent env cfg # type: ignore
+    #     resampling_time_range=(5.0, 5.0),
+    #     debug_vis=True,
+    #     ranges=mdp.UniformPoseCommandCfg.Ranges( # type: ignore
+    #         pos_x=(0.2, 0.8), pos_y=(-0.25, 0.25), pos_z=(1, 1), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+    #     ),        
+    # )
 
 
 @configclass
@@ -136,7 +182,7 @@ class ObservationsCfg:
         joint_pos = ObsTerm(func=mdp.joint_pos_rel) # type: ignore
         joint_vel = ObsTerm(func=mdp.joint_vel_rel) # type: ignore
         object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
-        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"}) # type: ignore
+        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose_1"}) # type: ignore
         actions = ObsTerm(func=mdp.last_action) # type: ignore
 
         def __post_init__(self):
@@ -170,17 +216,17 @@ class RewardsCfg:
 
     reaching_object = RewTerm(func=mdp.object_ee_distance, params={"std": 0.1}, weight=1.0)
 
-    lifting_object = RewTerm(func=mdp.object_is_lifted, params={"minimal_height": 0.04}, weight=15.0)
+    dragging_object = RewTerm(func=mdp.object_is_dragged, params={"minimal_drag": 0.04}, weight=15.0)
 
     object_goal_tracking = RewTerm(
         func=mdp.object_goal_distance,
-        params={"std": 0.3, "minimal_height": 0.04, "command_name": "object_pose"},
+        params={"std": 0.3, "minimal_drag": 0.04, "command_name": "object_pose_1"},
         weight=16.0,
     )
 
     object_goal_tracking_fine_grained = RewTerm(
         func=mdp.object_goal_distance,
-        params={"std": 0.05, "minimal_height": 0.04, "command_name": "object_pose"},
+        params={"std": 0.05, "minimal_drag": 0.04, "command_name": "object_pose_1"},
         weight=5.0,
     )
 
@@ -201,7 +247,7 @@ class TerminationsCfg:
     time_out = DoneTerm(func=mdp.time_out, time_out=True) # type: ignore
 
     object_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")} # type: ignore
+        func=mdp.root_height_below_minimum, params={"minimum_height": 0.5, "asset_cfg": SceneEntityCfg("object")} # type: ignore
     )
 
 
