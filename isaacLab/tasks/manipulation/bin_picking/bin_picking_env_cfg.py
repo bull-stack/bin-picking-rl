@@ -24,8 +24,7 @@ from omni.isaac.lab.markers import VisualizationMarkers, VisualizationMarkersCfg
 import omni.isaac.lab.sim as sim_utils
 from omni.isaac.lab.markers.config import FRAME_MARKER_CFG  # isort: skip
 from omni.isaac.lab.sensors.frame_transformer import OffsetCfg
-from . import mdp
-
+import mdp
 ##
 # Scene definition
 ##
