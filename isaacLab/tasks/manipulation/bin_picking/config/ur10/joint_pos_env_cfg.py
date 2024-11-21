@@ -74,27 +74,6 @@ class UR10BinPickingEnvCfg(BinPickingEnvCfg):
                         pos=[0.0, 0.0, 0.1034], # type: ignore
                     ),
                 ),
-                # FrameTransformerCfg.FrameCfg(
-                #     prim_path="{ENV_REGEX_NS}/Robot/ee_link",
-                #     name="end_effector",
-                #     offset=OffsetCfg(
-                #         pos=[0.0, 0.0, 0.1034], # type: ignore
-                #     ),
-                # ),
-                # FrameTransformerCfg.FrameCfg(
-                #     prim_path="{ENV_REGEX_NS}/Robot/ee_link",
-                #     name="end_effector",
-                #     offset=OffsetCfg(
-                #         pos=[0.0, 0.0, 0.1034], # type: ignore
-                #     ),
-                # ),
-                # FrameTransformerCfg.FrameCfg(
-                #     prim_path="{ENV_REGEX_NS}/Robot/ee_link",
-                #     name="end_effector",
-                #     offset=OffsetCfg(
-                #         pos=[0.0, 0.0, 0.1034], # type: ignore
-                #     ),
-                # ),
             ],
         )
 

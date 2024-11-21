@@ -68,6 +68,25 @@ import omni.isaac.lab_tasks  # noqa: F401
 from omni.isaac.lab_tasks.utils.hydra import hydra_task_config
 from omni.isaac.lab_tasks.utils.wrappers.sb3 import Sb3VecEnvWrapper, process_sb3_cfg
 
+import gymnasium as gym
+##
+# Register Gym environments.
+##
+##
+# Inverse Kinematics - Absolute Pose Control
+##
+# print('Isaac-Bin-Picking-UR10-IK-Abs-v0')
+# gym.register(
+#     id="Isaac-Bin-Picking-UR10-IK-Abs-v0",
+#     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+#     kwargs={
+#         "env_cfg_entry_point": ik_abs_env_cfg.UR10BinPickingEnvCfg_PLAY,
+#         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
+#         "rl_games_cfg_entry_point": f"{agents.__name__}:rl_games_ppo_cfg.yaml",
+#         "sb3_cfg_entry_point": f"{agents.__name__}:sb3_ppo_cfg.yaml",
+#     },
+#     disable_env_checker=True,
+# )
 
 @hydra_task_config(args_cli.task, "sb3_cfg_entry_point")
 def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agent_cfg: dict):
@@ -118,10 +137,10 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # convert to single-agent instance if required by the RL algorithm
     if isinstance(env.unwrapped, DirectMARLEnv):
-        env = multi_agent_to_single_agent(env)
+        env = multi_agent_to_single_agent(env) # type: ignore
 
     # wrap around environment for stable baselines
-    env = Sb3VecEnvWrapper(env)
+    env = Sb3VecEnvWrapper(env) # type: ignore
 
     if "normalize_input" in agent_cfg:
         env = VecNormalize(
@@ -153,6 +172,6 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
 if __name__ == "__main__":
     # run the main function
-    main()
+    main() # type: ignore
     # close sim app
     simulation_app.close()
